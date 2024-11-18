@@ -1,0 +1,74 @@
+<androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_marginTop="@dimen/_10sdp"
+    android:layout_marginEnd="@dimen/_10sdp"
+    android:layout_marginStart="@dimen/_10sdp"
+    android:background="@drawable/rounded_with_gray_border"
+    android:paddingHorizontal="@dimen/_12sdp"
+    android:paddingVertical="@dimen/_4sdp"
+    app:layout_constraintTop_toBottomOf="@+id/constraintLayout3"
+    tools:layout_editor_absoluteX="13dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <com.makeramen.roundedimageview.RoundedImageView
+        android:id="@+id/card_brand_iv"
+        android:layout_width="@dimen/_40sdp"
+        android:layout_height="@dimen/_40sdp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/ic_master"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_6sdp"
+        android:fontFamily="@font/montserrat_medium"
+        android:text="...."
+        android:textColor="@color/gray_color"
+        android:textSize="@dimen/_14sdp"
+        app:layout_constraintBottom_toBottomOf="@+id/card_brand_iv"
+        app:layout_constraintStart_toEndOf="@+id/card_brand_iv"
+        app:layout_constraintTop_toTopOf="@+id/card_brand_iv" />
+
+    <TextView
+        android:id="@+id/last_four_digits"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/montserrat_medium"
+        android:text="2090"
+        android:layout_marginStart="@dimen/_4sdp"
+        android:textColor="@color/gray_color"
+        android:textSize="@dimen/_14sdp"
+        app:layout_constraintBottom_toBottomOf="@+id/card_brand_iv"
+        app:layout_constraintStart_toEndOf="@+id/textView6"
+        app:layout_constraintTop_toTopOf="@+id/card_brand_iv" />
+
+    <TextView
+        android:id="@+id/cvv_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/montserrat_medium"
+        android:text="2090"
+        android:layout_marginEnd="@dimen/_10sdp"
+        android:textColor="@color/gray_color"
+        android:textSize="@dimen/_14sdp"
+        app:layout_constraintBottom_toBottomOf="@+id/card_brand_iv"
+        app:layout_constraintEnd_toStartOf="@+id/delete_btn"
+        app:layout_constraintTop_toTopOf="@+id/card_brand_iv" />
+
+
+    <ImageView
+        android:id="@+id/delete_btn"
+        android:layout_width="@dimen/_24sdp"
+        android:layout_height="@dimen/_24sdp"
+        android:src="@drawable/iv_delete"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

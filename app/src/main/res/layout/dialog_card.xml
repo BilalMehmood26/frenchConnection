@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/_17sdp"
+    android:layout_marginEnd="@dimen/_17sdp"
+    android:background="@drawable/rounded_with_gray_border"
+    android:paddingBottom="@dimen/_17sdp">
+
+    <TextView
+        android:id="@+id/fair_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_12sdp"
+        android:fontFamily="@font/montserrat_medium"
+        android:text="$10.00"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_14sdp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView16"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_17sdp"
+        android:layout_marginTop="@dimen/_6sdp"
+        android:layout_marginEnd="@dimen/_17sdp"
+        android:fontFamily="@font/montserrat_medium"
+        android:gravity="center"
+        android:text="French Connection will be charging the \namount below to your card on file."
+        android:textColor="#d7d9d9"
+        android:textSize="@dimen/_10sdp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fair_tv" />
+
+
+      <androidx.recyclerview.widget.RecyclerView
+          android:id="@+id/card_list_rv"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          tools:itemCount="2"
+          tools:listitem="@layout/item_card"
+          app:layout_constraintTop_toBottomOf="@+id/textView16" />
+
+    <TextView
+        android:id="@+id/add_card_btn"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/_30sdp"
+        android:layout_marginStart="@dimen/_17sdp"
+        android:layout_marginTop="@dimen/_8sdp"
+        android:layout_marginEnd="@dimen/_17sdp"
+        android:background="@drawable/gradient_button_less_rounded"
+        android:fontFamily="@font/montserrat_semi_bold"
+        android:gravity="center"
+        android:paddingHorizontal="@dimen/_8sdp"
+        android:paddingVertical="@dimen/_4sdp"
+        android:text="Add Card"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_9sdp"
+        app:layout_constraintEnd_toEndOf="@+id/card_list_rv"
+        app:layout_constraintStart_toStartOf="@+id/card_list_rv"
+        app:layout_constraintTop_toBottomOf="@+id/card_list_rv" />
+</androidx.constraintlayout.widget.ConstraintLayout>

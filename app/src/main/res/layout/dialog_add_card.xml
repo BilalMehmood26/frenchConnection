@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/_17sdp"
+    android:layout_marginEnd="@dimen/_17sdp"
+    android:background="@drawable/rounded_with_gray_border"
+    android:paddingBottom="@dimen/_17sdp">
+
+    <TextView
+        android:id="@+id/textView15"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_12sdp"
+        android:fontFamily="@font/montserrat_medium"
+        android:text="Add Card"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_14sdp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView16"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_17sdp"
+        android:layout_marginTop="@dimen/_6sdp"
+        android:layout_marginEnd="@dimen/_17sdp"
+        android:fontFamily="@font/montserrat_medium"
+        android:gravity="center"
+        android:text="While French Connected will take payment \nto proceed this ride."
+        android:textColor="@color/border_color"
+        android:textSize="@dimen/_10sdp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView15" />
+
+    <ImageView
+        android:id="@+id/imageView9"
+        android:layout_width="@dimen/_20sdp"
+        android:layout_height="@dimen/_20sdp"
+        android:layout_marginTop="@dimen/_4sdp"
+        android:src="@drawable/ic_master"
+        app:layout_constraintStart_toStartOf="@+id/textView16"
+        app:layout_constraintTop_toBottomOf="@+id/textView16" />
+
+    <ImageView
+        android:id="@+id/imageView10"
+        android:layout_width="@dimen/_20sdp"
+        android:layout_height="@dimen/_20sdp"
+        android:layout_marginStart="@dimen/_2sdp"
+        android:layout_marginTop="@dimen/_4sdp"
+        android:src="@drawable/ic_visa"
+        app:layout_constraintStart_toEndOf="@+id/imageView9"
+        app:layout_constraintTop_toBottomOf="@+id/textView16" />
+
+    <ImageView
+        android:id="@+id/imageView11"
+        android:layout_width="@dimen/_20sdp"
+        android:layout_height="@dimen/_20sdp"
+        android:layout_marginTop="@dimen/_4sdp"
+        android:layout_marginStart="@dimen/_2sdp"
+        android:src="@drawable/ic_amex_card"
+        app:layout_constraintStart_toEndOf="@+id/imageView10"
+        app:layout_constraintTop_toBottomOf="@+id/textView16" />
+
+    <TextView
+        android:id="@+id/textView19"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_4sdp"
+        android:fontFamily="@font/montserrat_bold"
+        android:text="CARD NUMBER"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_14sdp"
+        app:layout_constraintStart_toStartOf="@+id/imageView9"
+        app:layout_constraintTop_toBottomOf="@+id/imageView10" />
+
+    <EditText
+        android:id="@+id/card_number_et"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_with_gray_border"
+        android:fontFamily="@font/montserrat_medium"
+        android:hint="Card Number"
+        android:maxLength="16"
+        android:inputType="number"
+        android:imeOptions="actionNext"
+        android:paddingHorizontal="@dimen/_10sdp"
+        android:layout_marginTop="@dimen/_6sdp"
+        android:paddingVertical="@dimen/_12sdp"
+        android:paddingStart="@dimen/_40sdp"
+        android:singleLine="true"
+        android:textColor="@color/black"
+        android:textColorHint="@color/gray_color"
+        android:textSize="@dimen/_10sdp"
+        app:layout_constraintEnd_toEndOf="@+id/textView16"
+        app:layout_constraintStart_toStartOf="@+id/textView19"
+        app:layout_constraintTop_toBottomOf="@+id/textView19" />
+
+    <TextView
+        android:id="@+id/textView20"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/montserrat_bold"
+        android:text="EXPIRATION DATE CVC"
+        android:layout_marginTop="@dimen/_8sdp"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_14sdp"
+        app:layout_constraintStart_toStartOf="@+id/imageView9"
+        app:layout_constraintTop_toBottomOf="@+id/card_number_et" />
+
+    <EditText
+        android:id="@+id/month_et"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_with_gray_border"
+        android:fontFamily="@font/montserrat_medium"
+        android:hint="MM"
+        android:imeOptions="actionNext"
+        android:maxLength="2"
+        android:inputType="number"
+        android:paddingHorizontal="@dimen/_10sdp"
+        android:paddingVertical="@dimen/_12sdp"
+        android:layout_marginTop="@dimen/_6sdp"
+        android:layout_marginEnd="@dimen/_6sdp"
+        android:paddingStart="@dimen/_40sdp"
+        android:singleLine="true"
+        android:textColor="@color/black"
+        android:textColorHint="@color/gray_color"
+        android:textSize="@dimen/_10sdp"
+        app:layout_constraintEnd_toStartOf="@+id/year_et"
+        app:layout_constraintStart_toStartOf="@+id/textView20"
+        app:layout_constraintTop_toBottomOf="@+id/textView20" />
+
+    <EditText
+        android:id="@+id/year_et"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_6sdp"
+        android:background="@drawable/rounded_with_gray_border"
+        android:fontFamily="@font/montserrat_medium"
+        android:hint="YY"
+        android:inputType="number"
+        android:maxLength="2"
+        android:imeOptions="actionNext"
+        android:paddingHorizontal="@dimen/_10sdp"
+        android:paddingVertical="@dimen/_12sdp"
+        android:paddingStart="@dimen/_40sdp"
+        android:singleLine="true"
+        android:textColor="@color/black"
+        android:textColorHint="@color/gray_color"
+        android:textSize="@dimen/_10sdp"
+        app:layout_constraintBottom_toBottomOf="@+id/month_et"
+        app:layout_constraintEnd_toEndOf="@+id/textView16"
+        app:layout_constraintStart_toEndOf="@+id/month_et"
+        app:layout_constraintTop_toTopOf="@+id/month_et" />
+
+    <EditText
+        android:id="@+id/cvc_et"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_with_gray_border"
+        android:fontFamily="@font/montserrat_medium"
+        android:hint="CVC"
+        android:imeOptions="actionNext"
+        android:inputType="number"
+        android:layout_marginTop="@dimen/_8sdp"
+        android:paddingHorizontal="@dimen/_10sdp"
+        android:paddingVertical="@dimen/_12sdp"
+        android:paddingStart="@dimen/_40sdp"
+        android:singleLine="true"
+        android:textColor="@color/black"
+        android:textColorHint="@color/gray_color"
+        android:textSize="@dimen/_10sdp"
+        app:layout_constraintEnd_toEndOf="@+id/textView16"
+        app:layout_constraintStart_toStartOf="@+id/month_et"
+        app:layout_constraintTop_toBottomOf="@+id/month_et" />
+
+
+    <TextView
+        android:id="@+id/textView21"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/montserrat_bold"
+        android:text="Post Code"
+        android:layout_marginTop="@dimen/_4sdp"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_14sdp"
+        app:layout_constraintStart_toStartOf="@+id/imageView9"
+        app:layout_constraintTop_toBottomOf="@+id/cvc_et" />
+
+
+    <EditText
+        android:id="@+id/post_code_et"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_6sdp"
+        android:background="@drawable/rounded_with_gray_border"
+        android:fontFamily="@font/montserrat_medium"
+        android:hint="POST CODE"
+        android:imeOptions="actionDone"
+        android:paddingHorizontal="@dimen/_10sdp"
+        android:paddingVertical="@dimen/_12sdp"
+        android:singleLine="true"
+        android:textColor="@color/black"
+        android:textColorHint="@color/gray_color"
+        android:textSize="@dimen/_10sdp"
+        app:layout_constraintEnd_toEndOf="@+id/year_et"
+        app:layout_constraintStart_toStartOf="@+id/textView20"
+        app:layout_constraintTop_toBottomOf="@+id/textView21" />
+
+    <ImageView
+        android:layout_width="@dimen/_35sdp"
+        android:layout_height="@dimen/_25sdp"
+        android:src="@drawable/ic_unknown_card"
+        app:layout_constraintBottom_toBottomOf="@+id/card_number_et"
+        app:layout_constraintStart_toStartOf="@+id/card_number_et"
+        app:layout_constraintTop_toTopOf="@+id/card_number_et" />
+
+    <ImageView
+        android:layout_width="@dimen/_35sdp"
+        android:layout_height="@dimen/_25sdp"
+        android:src="@drawable/ic_expiry"
+        app:layout_constraintBottom_toBottomOf="@+id/month_et"
+        app:layout_constraintStart_toStartOf="@+id/month_et"
+        app:layout_constraintTop_toTopOf="@+id/month_et" />
+
+
+    <ImageView
+        android:layout_width="@dimen/_35sdp"
+        android:layout_height="@dimen/_25sdp"
+        android:src="@drawable/ic_expiry"
+        app:layout_constraintBottom_toBottomOf="@+id/year_et"
+        app:layout_constraintStart_toStartOf="@+id/year_et"
+        app:layout_constraintTop_toTopOf="@+id/year_et" />
+
+    <ImageView
+        android:layout_width="@dimen/_35sdp"
+        android:layout_height="@dimen/_25sdp"
+        android:src="@drawable/ic_cvc"
+        app:layout_constraintBottom_toBottomOf="@+id/cvc_et"
+        app:layout_constraintStart_toStartOf="@+id/cvc_et"
+        app:layout_constraintTop_toTopOf="@+id/cvc_et" />
+
+    <TextView
+        android:id="@+id/add_card_btn"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/_30sdp"
+        android:background="@drawable/gradient_button_less_rounded"
+        android:fontFamily="@font/montserrat_semi_bold"
+        android:gravity="center"
+        android:paddingHorizontal="@dimen/_8sdp"
+        android:paddingVertical="@dimen/_4sdp"
+        android:layout_marginTop="@dimen/_10sdp"
+        android:text="Pay Now"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_9sdp"
+        app:layout_constraintEnd_toEndOf="@+id/post_code_et"
+        app:layout_constraintStart_toStartOf="@+id/post_code_et"
+        app:layout_constraintTop_toBottomOf="@+id/post_code_et" />
+</androidx.constraintlayout.widget.ConstraintLayout>

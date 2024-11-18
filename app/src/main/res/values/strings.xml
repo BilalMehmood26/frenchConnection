@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">French Connection User</string>
+    <string name="forget_password"><u>Forget Password</u></string>
+    <string name="term"><u>Terms &amp; Condition</u></string>
+    <!--  TODO: Remove or change this placeholder text  -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="api_key">AIzaSyBBHiPBzaKIdhByQszaX4VdbtngMjoDFZ8</string>
+    <string name="GOOGLE_BROWSER_API_KEY">AIzaSyCOulawmBROcp77cDGNUCRIUS5F7C6KHys</string>
+    <array name="member_list">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+    </array>
+</resources>

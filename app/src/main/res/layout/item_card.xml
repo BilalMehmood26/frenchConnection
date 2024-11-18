@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout android:id="@+id/linearLayout11"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/_12sdp"
+    android:background="@color/border_color"
+    android:layout_marginEnd="@dimen/_17sdp"
+    android:layout_marginStart="@dimen/_17sdp"
+    android:paddingTop="@dimen/_10sdp"
+    android:paddingBottom="@dimen/_10sdp"
+    android:paddingStart="@dimen/_5sdp"
+    android:orientation="horizontal"
+    app:layout_constraintTop_toBottomOf="@+id/textView16"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <ImageView
+        android:id="@+id/cardBrandIv"
+        android:layout_width="@dimen/_25sdp"
+        android:layout_height="@dimen/_25sdp"
+        android:padding="@dimen/_4sdp"
+        android:src="@drawable/ic_visa"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/last_four_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:fontFamily="@font/montserrat_semi_bold"
+        android:text="**** **** **** 9863"
+        android:textColor="@color/black"
+        android:layout_marginStart="@dimen/_10sdp"
+        android:textSize="@dimen/_16sdp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/cardBrandIv"
+        app:layout_constraintTop_toTopOf="@+id/cardBrandIv" />
+
+
+    <TextView
+        android:id="@+id/expiry_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="@dimen/_10sdp"
+        android:fontFamily="@font/montserrat_semi_bold"
+        android:text="1/2029"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_16sdp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/last_four_tv"
+        app:layout_constraintTop_toTopOf="@+id/cardBrandIv" />
+</androidx.constraintlayout.widget.ConstraintLayout>
