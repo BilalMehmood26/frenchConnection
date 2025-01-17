@@ -113,6 +113,8 @@ class YourRideActivity : AppCompatActivity(), OnMapReadyCallback {
                     ).show()
                 }
             }
+
+            backBtn.setOnClickListener { onBackPressed() }
         }
     }
 
@@ -413,7 +415,7 @@ class YourRideActivity : AppCompatActivity(), OnMapReadyCallback {
             "message" to msg,
             "orderId" to rideID,
             "isRead" to isRead,
-            "timestamp" to System.currentTimeMillis().toString(),
+            "timestamp" to System.currentTimeMillis(),
             "title" to title,
             "type" to status,
             "userId" to Firebase.auth.currentUser!!.uid,

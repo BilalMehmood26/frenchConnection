@@ -15,11 +15,14 @@ import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.wallet.AutoResolveHelper
+import com.google.android.gms.wallet.contract.TaskResultContracts
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -38,6 +41,7 @@ import com.usaclean.frenchconnectionuser.model.PaymentIntentResponse
 import com.usaclean.frenchconnectionuser.model.PaymentMethodsResponse
 import com.usaclean.frenchconnectionuser.model.User
 import com.usaclean.frenchconnectionuser.stripe.Controller
+import com.usaclean.frenchconnectionuser.utils.GooglePaymentsUtil
 import com.usaclean.frenchconnectionuser.utils.UserSession
 import retrofit2.Call
 import retrofit2.Callback
@@ -83,6 +87,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             getOrders()
+            GooglePaymentsUtil.createPaymentsClient(this@YourDestinationActivity)
             stripe = Stripe(
                 this@YourDestinationActivity,
                 "pk_test_51PgBExCo08Oa4W8HRRlISwH7IOZRW42joDX0KpJRo7RK4tZhrz29Cout7tSsBEWCeODsr7IhT8jQGNiUrMIwwR0h00jZcUoUkr"
@@ -96,6 +101,27 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
             createFirstStep(UserSession.user.stripeCustid!!)
             setListener()
         }
+    }
+
+    private val paymentDataLauncher =
+        registerForActivityResult(TaskResultContracts.GetPaymentDataResult()) { taskResult ->
+            when (taskResult.status.statusCode) {
+                CommonStatusCodes.SUCCESS -> {
+                    taskResult.result?.let { token ->
+                        tipPrice+=1.0
+                        updateStatus(rideID!!, "rated",round(binding.ratingBar.rating).toInt(),tipPrice)
+                    }
+                }
+
+                CommonStatusCodes.CANCELED -> {}
+                AutoResolveHelper.RESULT_ERROR -> {}
+                CommonStatusCodes.INTERNAL_ERROR -> {}
+            }
+        }
+
+    fun requestPaymentGooglePay(priceUSD: String) {
+        val task = GooglePaymentsUtil.getLoadPaymentDataTask(priceUSD)
+        task?.addOnCompleteListener(paymentDataLauncher::launch)
     }
 
     private fun addCard(
@@ -314,14 +340,14 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
             driverId to false,
         )
         val notification = hashMapOf(
-            "driverId" to driverId,
+            "driverId" to Firebase.auth.currentUser!!.uid,
             "message" to msg,
             "orderId" to rideID,
             "isRead" to isRead,
             "timestamp" to System.currentTimeMillis(),
             "title" to title,
             "type" to status,
-            "userId" to Firebase.auth.currentUser!!.uid,
+            "userId" to driverId,
         )
         db.collection("Notification").document().set(notification).addOnSuccessListener {
             binding.progressBar.visibility = View.GONE
@@ -353,12 +379,6 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
 
         cardListRv.layoutManager = LinearLayoutManager(this@YourDestinationActivity)
         cardListRv.adapter = CardListAdapter(this@YourDestinationActivity, cardList) {
-            /*if(!binding.otherTip.text.equals("")){
-                tipPrice= binding.otherTip.text.toString().toDouble()
-                tipPrice+=1.0
-            }else{
-                tipPrice+=1.0
-            }*/
             tipPrice+=1.0
             updateStatus(rideID!!, "rated",round(binding.ratingBar.rating).toInt(),tipPrice)
             dialog.dismiss()
@@ -479,11 +499,20 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
             tipPrice = tipText.toDouble()
         }
         fair.setText("$ $tipPrice"+"0")
+
         dialogView.findViewById<TextView>(R.id.your_proceed_btn).setOnClickListener {
+            if (cardTypeRadio.isChecked) {
                 showCardDialog(carType)
+            } else {
+                //showCardDialog(carType, cardType)
+                //googlePayment(totalFair.toString())
+                requestPaymentGooglePay(tipPrice.toString())
+            }
             Log.d("LOGGER", "showCustomDialog: $carType")
             dialog.dismiss()
         }
+
+
     }
 
     override fun onMapReady(googelMaps: GoogleMap) {

@@ -1,18 +1,27 @@
 package com.usaclean.frenchconnectionuser.activities
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
+import com.google.android.gms.wallet.AutoResolveHelper
+import com.google.android.gms.wallet.IsReadyToPayRequest
+import com.google.android.gms.wallet.PaymentData
+import com.google.android.gms.wallet.PaymentDataRequest
+import com.google.android.gms.wallet.PaymentsClient
+import com.google.android.gms.wallet.Wallet
+import com.google.android.gms.wallet.WalletConstants
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -24,6 +33,8 @@ import com.usaclean.frenchconnectionuser.fragment.ProfileFragment
 import com.usaclean.frenchconnectionuser.fragment.SchduleRideFragment
 import com.usaclean.frenchconnectionuser.fragment.WalletFragment
 import com.usaclean.frenchconnectionuser.utils.UserSession
+import org.json.JSONArray
+import org.json.JSONObject
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -35,7 +46,6 @@ class DashboardActivity : AppCompatActivity() {
     private val mAuth = Firebase.auth
     private var db = Firebase.firestore
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
@@ -43,6 +53,7 @@ class DashboardActivity : AppCompatActivity() {
         clearAllTab()
         setHomeTab()
         setListener()
+
         askNotificationPermission()
         binding.apply {
             logoutIV.setOnClickListener {
@@ -58,8 +69,6 @@ class DashboardActivity : AppCompatActivity() {
     ) { isGranted: Boolean ->
         if (isGranted) {
             // FCM SDK (and your app) can post notifications.
-        } else {
-            // TODO: Inform user that that your app will not show notifications.
         }
     }
 

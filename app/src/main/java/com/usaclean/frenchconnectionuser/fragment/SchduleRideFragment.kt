@@ -22,6 +22,9 @@ import androidx.fragment.app.FragmentTransaction
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.gms.wallet.AutoResolveHelper
+import com.google.android.gms.wallet.contract.TaskResultContracts
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -43,6 +46,7 @@ import com.usaclean.frenchconnectionuser.model.PaymentIntentResponse
 import com.usaclean.frenchconnectionuser.model.PaymentMethodsResponse
 import com.usaclean.frenchconnectionuser.model.RideStatus
 import com.usaclean.frenchconnectionuser.stripe.Controller
+import com.usaclean.frenchconnectionuser.utils.GooglePaymentsUtil
 import com.usaclean.frenchconnectionuser.utils.UserSession
 import retrofit2.Call
 import retrofit2.Callback
@@ -55,6 +59,7 @@ import java.util.Calendar
 import java.util.UUID
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.round
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -87,7 +92,7 @@ class SchduleRideFragment : Fragment() {
 
     private val memberList = arrayListOf("1", "2", "3", "4", "5", "6", "7")
     private var numberOfMembers = 1
-    private var totalFair = 10.00
+    private var totalFair = 10
     private var returnWay = "OneWay"
 
     private lateinit var fragmentContext: Context
@@ -318,10 +323,10 @@ class SchduleRideFragment : Fragment() {
     private fun createRide() {
 
         val fareMap = mapOf(
-            "OneWay" to listOf(10.00, 18.00, 24.00, 28.00, 40.00, 50.00, 54.00),
-            "Return" to listOf(25.00, 30.00, 40.00, 50.00, 60.00, 90.00, 100.00)
+            "OneWay" to listOf(10.00, 18.00, 24.00, 28.00, 40.00, 50.00, 54.00).map { it.toInt() },
+            "Return" to listOf(25.00, 30.00, 40.00, 50.00, 60.00, 90.00, 100.00).map { it.toInt() }
         )
-        totalFair = fareMap[returnWay]!!.getOrNull(numberOfMembers) ?: 0.0
+        totalFair = fareMap[returnWay]!!.getOrNull(numberOfMembers) ?: 0
         showCustomDialog()
     }
 
@@ -352,18 +357,7 @@ class SchduleRideFragment : Fragment() {
                 ).show()
 
                 else -> {
-                    showCardDialog(carType,"")
-                   /* scheduleBooking(
-                        carType,
-                        totalFair.toString(),
-                        destAddress,
-                        destLat,
-                        destLng,
-                        pickUpAddress,
-                        pickUpLat,
-                        pickUpLng
-                    )*/
-
+                    showPaymentDialog(carType)
                     Log.d("LOGGER", "showCustomDialog: $carType")
                     dialog.dismiss()
                 }
@@ -476,6 +470,60 @@ class SchduleRideFragment : Fragment() {
             dialog.dismiss()
         }
     }
+
+    @SuppressLint("MissingInflatedId")
+    private fun showPaymentDialog(carType: String) {
+        val dialogView =
+            LayoutInflater.from(fragmentContext).inflate(R.layout.dialog_payment, null)
+        val dialogBuilder = AlertDialog.Builder(fragmentContext)
+            .setView(dialogView)
+        val dialog = dialogBuilder.create()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+
+
+        val cardTypeRadio = dialogView.findViewById<RadioButton>(R.id.visa_radio)
+        val fair = dialogView.findViewById<TextView>(R.id.fair_tv)
+        showCardDialog(carType,"")
+        dialogView.findViewById<TextView>(R.id.your_proceed_btn).setOnClickListener {
+            if (cardTypeRadio.isChecked) {
+                showCardDialog(carType,"")
+            } else {
+                requestPaymentGooglePay(totalFair.toString())
+            }
+            Log.d("LOGGER", "showCustomDialog: $carType")
+            dialog.dismiss()
+        }
+    }
+
+    fun requestPaymentGooglePay(priceUSD: String) {
+        val task = GooglePaymentsUtil.getLoadPaymentDataTask(priceUSD)
+        task?.addOnCompleteListener(paymentDataLauncher::launch)
+    }
+
+    private val paymentDataLauncher =
+        registerForActivityResult(TaskResultContracts.GetPaymentDataResult()) { taskResult ->
+            when (taskResult.status.statusCode) {
+                CommonStatusCodes.SUCCESS -> {
+                    taskResult.result?.let { token ->
+                        scheduleBooking(
+                            carType,
+                            totalFair.toString(),
+                            destAddress,
+                            destLat,
+                            destLng,
+                            pickUpAddress,
+                            pickUpLat,
+                            pickUpLng
+                        )
+                    }
+                }
+
+                CommonStatusCodes.CANCELED -> {}
+                AutoResolveHelper.RESULT_ERROR -> {}
+                CommonStatusCodes.INTERNAL_ERROR -> {}
+            }
+        }
 
     private fun addCardDialog(carType: String, cardType: String) {
         val dialogView =

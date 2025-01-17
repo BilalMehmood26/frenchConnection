@@ -7,6 +7,7 @@
     <string name="api_key">AIzaSyBBHiPBzaKIdhByQszaX4VdbtngMjoDFZ8</string>
     <string name="GOOGLE_BROWSER_API_KEY">AIzaSyCOulawmBROcp77cDGNUCRIUS5F7C6KHys</string>
     <array name="member_list">
+        <item>0</item>
         <item>1</item>
         <item>2</item>
         <item>3</item>

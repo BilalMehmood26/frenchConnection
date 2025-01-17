@@ -13,8 +13,8 @@ android {
         applicationId = "com.usaclean.frenchconnectionuser"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 14
+        versionName = "2.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -74,5 +74,11 @@ dependencies {
     implementation ("com.stripe:stripe-android:20.48.1")
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    //google_pay
+    implementation ("com.google.android.gms:play-services-wallet:18.0.0")
+    //in_app_purchase
+    implementation ("com.android.billingclient:billing-ktx:7.1.1")
+
 
 }

@@ -97,7 +97,7 @@ class PaymentRepository {
         }
     }*/
 
-    suspend fun confirmPaymentIntent(paymentMethodId: String): Result<ConfirmPaymentResponse> {
+  /*  suspend fun confirmPaymentIntent(paymentMethodId: String): Result<ConfirmPaymentResponse> {
         //val body = mapOf("pi_id" to paymentMethodId)
         val body = ConfirmPaymentRequest(paymentMethodId)
         return try {
@@ -110,7 +110,7 @@ class PaymentRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
+    }*/
 
     suspend fun connectAccount(map : Map<String, Any>): Result<ResponseBody> {
         return try {

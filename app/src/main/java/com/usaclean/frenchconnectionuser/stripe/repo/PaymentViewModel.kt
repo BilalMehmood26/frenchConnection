@@ -99,7 +99,7 @@ class PaymentViewModel(): ViewModel() {
         }
     }*/
 
-    fun confirmPayment(paymentMethodId: String) {
+   /* fun confirmPayment(paymentMethodId: String) {
         viewModelScope.launch {
             val result = repository.confirmPaymentIntent(paymentMethodId)
             result.onSuccess { matcher ->
@@ -108,7 +108,7 @@ class PaymentViewModel(): ViewModel() {
                 _error.value = error.message
             }
         }
-    }
+    }*/
 
     fun setConnectWork(map : HashMap<String, Any>) {
         viewModelScope.launch {

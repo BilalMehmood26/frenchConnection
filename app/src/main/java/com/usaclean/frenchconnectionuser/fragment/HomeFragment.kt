@@ -3,8 +3,10 @@ package com.usaclean.frenchconnectionuser.fragment
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -15,11 +17,39 @@ import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.billingclient.api.AcknowledgePurchaseParams
+import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingFlowParams
+import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.ConsumeParams
+import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.PurchasesUpdatedListener
+import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.SkuDetails
+import com.android.billingclient.api.SkuDetailsParams
+import com.android.billingclient.api.consumePurchase
 import com.bumptech.glide.Glide
+import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.wallet.AutoResolveHelper
+import com.google.android.gms.wallet.IsReadyToPayRequest
+import com.google.android.gms.wallet.PaymentCardRecognitionIntentRequest
+import com.google.android.gms.wallet.PaymentData
+import com.google.android.gms.wallet.PaymentDataRequest
+import com.google.android.gms.wallet.PaymentsClient
+import com.google.android.gms.wallet.Wallet
+import com.google.android.gms.wallet.WalletConstants
+import com.google.android.gms.wallet.contract.TaskResultContracts
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -35,6 +65,8 @@ import com.usaclean.frenchconnectionuser.adapter.CardListAdapter
 import com.usaclean.frenchconnectionuser.databinding.FragmentHomeBinding
 import com.usaclean.frenchconnectionuser.model.AccountPaymentRequest
 import com.usaclean.frenchconnectionuser.model.Booking
+import com.usaclean.frenchconnectionuser.model.ConfirmPaymentRequest
+import com.usaclean.frenchconnectionuser.model.ConfirmPaymentResponse
 import com.usaclean.frenchconnectionuser.model.CustomerResponse
 import com.usaclean.frenchconnectionuser.model.FirstStepResponse
 import com.usaclean.frenchconnectionuser.model.PaymentIntentResponse
@@ -42,7 +74,13 @@ import com.usaclean.frenchconnectionuser.model.PaymentMethodsResponse
 import com.usaclean.frenchconnectionuser.model.RideStatus
 import com.usaclean.frenchconnectionuser.stripe.Controller
 import com.usaclean.frenchconnectionuser.stripe.repo.PaymentViewModel
+import com.usaclean.frenchconnectionuser.utils.GooglePaymentsUtil
 import com.usaclean.frenchconnectionuser.utils.UserSession
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -54,17 +92,39 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 
-class HomeFragment : Fragment() {
+class HomeFragment : Fragment(){
 
 
     private val binding: FragmentHomeBinding by lazy {
         FragmentHomeBinding.inflate(layoutInflater)
     }
 
-
     private val memberList = arrayListOf("1", "2", "3", "4", "5", "6", "7")
+
+    private val productMap = mapOf(
+        "OneWay_1" to "one_way_1",
+        "OneWay_2" to "one_way_2",
+        "OneWay_3" to "one_way_3",
+        "OneWay_4" to "one_way_4",
+        "OneWay_5" to "one_way_5",
+        "OneWay_6" to "one_way_6",
+        "OneWay_7" to "one_way_7",
+        "Return_1" to "two_way_1",
+        "Return_2" to "two_way_2",
+        "Return_3" to "two_way_3",
+        "Return_4" to "two_way_4",
+        "Return_5" to "two_way_5",
+        "Return_6" to "two_way_6",
+        "Return_7" to "two_way_7"
+    )
+
+    private var selectedProduct = ""
+    private var selectedIndex = 0
+
+    private lateinit var mBillingClient: BillingClient
+
     private var numberOfMembers = 1
-    private var totalFair = 10.00
+    private var totalFair = 10
     private var returnWay = "OneWay"
     private lateinit var fragmentContext: Context
     private var isBooked = false
@@ -86,17 +146,24 @@ class HomeFragment : Fragment() {
     private val db = Firebase.firestore
 
     private var secrat = ""
-    private var paymentMethod = ""
     lateinit var stripe: Stripe
 
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         binding.apply {
 
+            yourProfileBtn.setOnClickListener {
+                Log.d("logger", "onCreateView: ")
+            }
+            //Google_Pay
+            GooglePaymentsUtil.createPaymentsClient(requireActivity())
+
             userNameTv.text = UserSession.user.userName
+
             if (UserSession.user.image.equals("")) {
                 profileIv.setImageResource(R.drawable.dummy_profile)
             } else {
@@ -106,30 +173,133 @@ class HomeFragment : Fragment() {
             parajeID.setOnSpinnerItemSelectedListener<String> { oldIndex, oldItem, newIndex, newText ->
                 val pharmacy = memberList[newIndex]
                 numberOfMembers = newIndex
-                parajeID.setText(pharmacy)
+                selectedIndex = newIndex + 1
+                parajeID.text = pharmacy
+                updateSelectedProduct()
+
+                Log.d("LOGGER", "Selected Product Id: $selectedProduct")
             }
             stripe = Stripe(
                 fragmentContext,
-                "pk_test_51PgBExCo08Oa4W8HRRlISwH7IOZRW42joDX0KpJRo7RK4tZhrz29Cout7tSsBEWCeODsr7IhT8jQGNiUrMIwwR0h00jZcUoUkr"
+                "pk_live_51PgBExCo08Oa4W8HPCTXBEdse6nqn39Rdz4qMDcVGdJdVWMOV5zY5lxQjHJy2H7QJ8RlpgfsFzzWWduSJEiG3b8O00qcKyXeUe"
             )
             PaymentConfiguration.init(
                 fragmentContext,
-                "pk_test_51PgBExCo08Oa4W8HRRlISwH7IOZRW42joDX0KpJRo7RK4tZhrz29Cout7tSsBEWCeODsr7IhT8jQGNiUrMIwwR0h00jZcUoUkr"
+                "pk_live_51PgBExCo08Oa4W8HPCTXBEdse6nqn39Rdz4qMDcVGdJdVWMOV5zY5lxQjHJy2H7QJ8RlpgfsFzzWWduSJEiG3b8O00qcKyXeUe"
             )
-
+            createFirstStep(UserSession.user.stripeCustid!!)
             if (UserSession.user.stripeCustid == "") {
                 createCustomer(UserSession.user.email!!, UserSession.user.id!!)
             } else {
-                createFirstStep(UserSession.user.stripeCustid!!)
                 Log.d("Logger", "onCreateView: ${UserSession.user.stripeCustid}")
+                createFirstStep(UserSession.user.stripeCustid!!)
             }
 
             getBooking()
             setListener()
             getCardList(UserSession.user.stripeCustid!!)
+            initBillingClient()
+
 
         }
         return binding.root
+    }
+
+    private fun updateSelectedProduct() {
+        val key = "${returnWay}_$selectedIndex"
+        selectedProduct = productMap[key] ?: ""
+    }
+
+    private fun initBillingClient() {
+        mBillingClient = BillingClient.newBuilder(fragmentContext)
+            .enablePendingPurchases()
+            .setListener { billingResult, list ->
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && list != null) {
+                    list.forEach { purchase ->
+                        Log.d("LOGGER", "Verify successful")
+                        val transactionId = purchase.orderId?: UUID.randomUUID().toString()
+                        Log.d("LOGGER", "transiction ID : $transactionId")
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            try {
+                                consumePurchase(purchase)
+                                addBooking(
+                                    carType,
+                                    totalFair.toString(),
+                                    destAddress,
+                                    destLat,
+                                    destLng,
+                                    destStatus,
+                                    pickUpAddress,
+                                    pickUpLat,
+                                    pickUpLng,
+                                    pickUpStatus
+                                )
+                            } catch (e: Exception) {
+                                Log.e("LOGGER", "Error in addBooking", e)
+                            }
+                        }
+                    }
+                }else{
+                    Log.d("LOGGER", "responseCode is null ")
+                }
+            }.build()
+
+        establishConnection()
+    }
+
+    private fun establishConnection() {
+        mBillingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    // The BillingClient is ready. You can query purchases here.
+                    //Use any of function below to get details upon successful connection
+                    Log.d("LOGGER", "Connection Established")
+                }
+            }
+
+            override fun onBillingServiceDisconnected() {
+                // Try to restart the connection on the next request to
+                // Google Play by calling the startConnection() method.
+                Log.d("LOGGER", "Connection NOT Established")
+                establishConnection()
+            }
+        })
+    }
+
+    private fun consumePurchase(purchase: Purchase) {
+        val consumeParams = ConsumeParams.newBuilder()
+            .setPurchaseToken(purchase.purchaseToken) // Set the purchase token (required)
+            .build()
+
+        lifecycleScope.launch {
+            mBillingClient.consumePurchase(consumeParams)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        Toast.makeText(fragmentContext, "hello", Toast.LENGTH_SHORT).show()
+        when (requestCode) {
+            1000 -> {
+                when (resultCode) {
+                    Activity.RESULT_OK -> {
+                        val paymentData = PaymentData.getFromIntent(data!!)
+                        Log.d("LOGGER", "onActivityResult:${paymentData!!.toJson()} ")
+                    }
+
+                    Activity.RESULT_CANCELED -> {
+                        Toast.makeText(fragmentContext, "Canceled", Toast.LENGTH_SHORT).show()
+                    }
+
+                    AutoResolveHelper.RESULT_ERROR -> {
+                        AutoResolveHelper.getStatusFromIntent(data)?.let {
+                            Toast.makeText(fragmentContext, "${it.statusCode}", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun createCustomer(email: String, id: String) {
@@ -218,6 +388,7 @@ class HomeFragment : Fragment() {
         postalCode: String
     ) {
 
+        binding.progressBar.visibility = View.VISIBLE
         val cardParams = CardParams(
             cardNumber,
             expiryMonth.toInt(),
@@ -227,19 +398,25 @@ class HomeFragment : Fragment() {
         )
 
         Log.d("LOGGER", "Secrate : $secrat")
-        val paymentMethodCreateParams = PaymentMethodCreateParams.createCard(cardParams)
-        val paymentIntentParams = ConfirmSetupIntentParams.create(paymentMethodCreateParams, secrat)
-        val setupIntent = stripe.confirmSetupIntentSynchronous(paymentIntentParams)
+        if (secrat.isNotEmpty()) {
+            val paymentMethodCreateParams = PaymentMethodCreateParams.createCard(cardParams)
+            val paymentIntentParams =
+                ConfirmSetupIntentParams.create(paymentMethodCreateParams, secrat)
+            val setupIntent = stripe.confirmSetupIntentSynchronous(paymentIntentParams)
 
-        if (setupIntent.status == StripeIntent.Status.Succeeded) {
-            Log.d("LOGGER", "Customer Key: ${UserSession.user.stripeCustid}")
-            Log.d("LOGGER", "Payment Intent Key: ${setupIntent.paymentMethodId.toString()}")
-            getPaymentIntent(
-                carType,
-                1000,
-                UserSession.user.stripeCustid,
-                setupIntent.paymentMethodId.toString()
-            )
+            if (setupIntent.status == StripeIntent.Status.Succeeded) {
+                Log.d("LOGGER", "Customer Key: ${UserSession.user.stripeCustid}")
+                Log.d("LOGGER", "Payment Intent Key: ${setupIntent.paymentMethodId.toString()}")
+                getPaymentIntent(
+                    carType,
+                    1000,
+                    UserSession.user.stripeCustid,
+                    setupIntent.paymentMethodId.toString()
+                )
+            }
+        } else {
+            binding.progressBar.visibility = View.GONE
+            Toast.makeText(fragmentContext, "Secret Key is empty", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -260,19 +437,7 @@ class HomeFragment : Fragment() {
 
                     if (response.isSuccessful) {
                         binding.progressBar.visibility = View.GONE
-                        addBooking(
-                            carType,
-                            totalFair.toString(),
-                            destAddress,
-                            destLat,
-                            destLng,
-                            destStatus,
-                            pickUpAddress,
-                            pickUpLat,
-                            pickUpLng,
-                            pickUpStatus
-                        )
-                        getCardList(UserSession.user.stripeCustid!!)
+                        confirmPayment(response.body()!!.transferinfo)
                         Log.d("Logger", "TranferInfo: ${response.body()?.transferinfo}")
                     } else {
                         binding.progressBar.visibility = View.GONE
@@ -289,6 +454,49 @@ class HomeFragment : Fragment() {
                     binding.progressBar.visibility = View.GONE
                     Toast.makeText(fragmentContext, t.message.toString(), Toast.LENGTH_SHORT).show()
                 }
+            })
+    }
+
+    private fun confirmPayment(pmID: String) {
+        binding.progressBar.visibility = View.VISIBLE
+        val pm_ID = ConfirmPaymentRequest(pmID)
+        Controller.instance.confirmPayment(pm_ID)
+            .enqueue(object : Callback<ConfirmPaymentResponse> {
+                override fun onResponse(
+                    call: Call<ConfirmPaymentResponse>,
+                    response: Response<ConfirmPaymentResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        binding.progressBar.visibility = View.GONE
+                        addBooking(
+                            carType,
+                            totalFair.toString(),
+                            destAddress,
+                            destLat,
+                            destLng,
+                            destStatus,
+                            pickUpAddress,
+                            pickUpLat,
+                            pickUpLng,
+                            pickUpStatus
+                        )
+                        getCardList(UserSession.user.stripeCustid!!)
+                    } else {
+                        Toast.makeText(
+                            fragmentContext,
+                            response.errorBody()!!.string(),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        binding.progressBar.visibility = View.GONE
+                    }
+                }
+
+                override fun onFailure(call: Call<ConfirmPaymentResponse>, t: Throwable) {
+                    binding.progressBar.visibility = View.GONE
+                    Toast.makeText(fragmentContext, t.message.toString(), Toast.LENGTH_SHORT).show()
+
+                }
+
             })
     }
 
@@ -325,30 +533,50 @@ class HomeFragment : Fragment() {
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     private fun createRide() {
-
         val fareMap = mapOf(
-            "OneWay" to listOf(10.00, 18.00, 24.00, 28.00, 40.00, 50.00, 54.00),
-            "Return" to listOf(25.00, 30.00, 40.00, 50.00, 60.00, 90.00, 100.00)
+            "OneWay" to listOf(
+                1.00,
+                10.00,
+                18.00,
+                24.00,
+                28.00,
+                40.00,
+                50.00,
+                54.00
+            ).map { it.toInt() },
+            "Return" to listOf(
+                1.00,
+                25.00,
+                30.00,
+                40.00,
+                50.00,
+                60.00,
+                90.00,
+                100.00
+            ).map { it.toInt() }
         )
-        totalFair = fareMap[returnWay]!!.getOrNull(numberOfMembers) ?: 0.0
+        totalFair = fareMap[returnWay]?.getOrNull(numberOfMembers) ?: 0
 
         showCustomDialog()
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     private fun setListener() {
 
         binding.runningRide.setOnClickListener {
             binding.runningRide.setBackgroundResource(R.drawable.gradient_button)
             binding.completeRide.setBackgroundResource(0)
             returnWay = "OneWay"
-
+            updateSelectedProduct()
         }
 
         binding.completeRide.setOnClickListener {
             binding.completeRide.setBackgroundResource(R.drawable.gradient_button)
             binding.runningRide.setBackgroundResource(0)
             returnWay = "Return"
+            updateSelectedProduct()
         }
 
         binding.apply {
@@ -456,6 +684,7 @@ class HomeFragment : Fragment() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     @SuppressLint("MissingInflatedId")
     private fun showCustomDialog() {
         val dialogView =
@@ -539,7 +768,6 @@ class HomeFragment : Fragment() {
         dialog.show()
 
         dialogView.findViewById<TextView>(R.id.add_card_btn).setOnClickListener {
-            dialog.dismiss()
             val cardNumber = dialog.findViewById<EditText>(R.id.card_number_et)
             val month = dialog.findViewById<EditText>(R.id.month_et)
             val year = dialog.findViewById<EditText>(R.id.year_et)
@@ -561,6 +789,7 @@ class HomeFragment : Fragment() {
                     postalCode.text.toString()
                 )
             }
+            dialog.dismiss()
         }
     }
 
@@ -603,8 +832,11 @@ class HomeFragment : Fragment() {
         lng: Double,
         status: String
     ) {
+        // Update progress bar visibility on the main thread
+        lifecycleScope.launch {
+            binding.progressBar.visibility = View.VISIBLE
+        }
 
-        binding.progressBar.visibility = View.VISIBLE
         val destinations = hashMapOf<String, Any>(
             "address" to destAddress,
             "lat" to destLat,
@@ -624,7 +856,7 @@ class HomeFragment : Fragment() {
         val booking = hashMapOf(
             "bookingDate" to System.currentTimeMillis(),
             "carType" to carType,
-            "distance" to "$distance miles",
+            "distance" to "$distance miles", // Ensure 'distance' is properly initialized
             "id" to id,
             "price" to price,
             "destinations" to destinationsList,
@@ -634,30 +866,40 @@ class HomeFragment : Fragment() {
             "userId" to Firebase.auth.currentUser!!.uid
         )
 
+        Log.d("LOGGER", "in Booking method")
         val pickUpModel = Booking.PickUp(address, lat, lng)
-        db.collection("Bookings").document(id).set(booking).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Toast.makeText(fragmentContext, "Order Created", Toast.LENGTH_SHORT).show()
-                isBooked = true
-                updateNotification(
-                    "New Ride Booked",
-                    "Your booking was received, we will connect you to a driver soon.",
-                    "booked",
-                    id,
-                    lat,
-                    lng,
-                    pickUpModel.address!!,
-                    destAddress,
-                    carType
-                )
-                binding.progressBar.visibility = View.GONE
-            } else {
-                binding.progressBar.visibility = View.GONE
-                Toast.makeText(
-                    fragmentContext,
-                    task.exception!!.message.toString(),
-                    Toast.LENGTH_SHORT
-                ).show()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Perform the database operation in the background
+                db.collection("Bookings").document(id).set(booking).addOnCompleteListener { task ->
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        if (task.isSuccessful) {
+                            Toast.makeText(fragmentContext, "Order Created", Toast.LENGTH_SHORT).show()
+                            isBooked = true
+                            Log.d("LOGGER", "Booking success")
+                            updateNotification(
+                                "New Ride Booked",
+                                "Your booking was received, we will connect you to a driver soon.",
+                                "booked",
+                                id,
+                                lat,
+                                lng,
+                                pickUpModel.address!!,
+                                destAddress,
+                                carType
+                            )
+                            binding.progressBar.visibility = View.GONE
+                        } else {
+                            Log.d("LOGGER", "Booking failed")
+                            binding.progressBar.visibility = View.GONE
+                            Toast.makeText(fragmentContext, task.exception!!.message.toString(), Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("LOGGER", "Error in addBooking", e)
+                // Handle error
             }
         }
     }
@@ -673,6 +915,7 @@ class HomeFragment : Fragment() {
         dropOffAddress: String,
         carType: String
     ) {
+        Log.d("LOGGER", "in Notification Method")
         binding.progressBar.visibility = View.VISIBLE
         val isRead = hashMapOf(
             Firebase.auth.currentUser!!.uid to false
@@ -688,8 +931,8 @@ class HomeFragment : Fragment() {
         )
         db.collection("Notification").document().set(notification).addOnSuccessListener {
             binding.progressBar.visibility = View.GONE
-
-            val intent = Intent(requireActivity(), YourRideActivity::class.java)
+            Log.d("LOGGER", "in Notificiation success")
+            /*val intent = Intent(requireActivity(), YourRideActivity::class.java)
             intent.putExtra("pickUpLat", pickUpLat)
             intent.putExtra("pickUpLng", pickUpLng)
             intent.putExtra("pickUpAddress", pickUpAddress)
@@ -697,14 +940,16 @@ class HomeFragment : Fragment() {
             intent.putExtra("driverID", "")
             intent.putExtra("carType", carType)
             intent.putExtra("rideID", orderID)
-            startActivity(intent)
+            startActivity(intent)*/
 
         }.addOnFailureListener {
+            Log.d("LOGGER", "in Notificaiton Fail")
             binding.progressBar.visibility = View.GONE
             Toast.makeText(fragmentContext, it.message.toString(), Toast.LENGTH_SHORT).show()
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     @SuppressLint("MissingInflatedId")
     private fun showPaymentDialog(carType: String) {
         val dialogView =
@@ -718,18 +963,61 @@ class HomeFragment : Fragment() {
 
         val cardTypeRadio = dialogView.findViewById<RadioButton>(R.id.visa_radio)
         val fair = dialogView.findViewById<TextView>(R.id.fair_tv)
-        fair.setText("$ $totalFair")
+        fair.text = "$ $totalFair"
         dialogView.findViewById<TextView>(R.id.your_proceed_btn).setOnClickListener {
             if (cardTypeRadio.isChecked) {
-                cardType = "Visa"
+                cardType = "Card"
                 showCardDialog(carType, cardType)
             } else {
-                cardType = "Master"
-                showCardDialog(carType, cardType)
+                cardType = "GooglePay"
+                getSubPurchases()
             }
-            Log.d("LOGGER", "showCustomDialog: $carType")
+            Log.d("LOGGER", "showCustomDialog: ${totalFair.toString()}")
             dialog.dismiss()
         }
+    }
+
+    private fun getSubPurchases() {
+        val productList = java.util.ArrayList<QueryProductDetailsParams.Product>()
+
+        productList.add(
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(selectedProduct)
+                .setProductType(BillingClient.SkuType.INAPP)
+                .build()
+        )
+
+        val params = QueryProductDetailsParams.newBuilder()
+            .setProductList(productList)
+            .build()
+
+        mBillingClient.queryProductDetailsAsync(params) { billingResult, list ->
+            Log.d("LOGGER", "list Size: ${list.size}")
+            Log.d("LOGGER", "list: ${list}")
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && list.isNotEmpty()) {
+                launchSubPurchase(list[0])
+                Log.d("LOGGER", "Product Price: ${list[0].oneTimePurchaseOfferDetails?.formattedPrice}")
+            }else{
+                Log.d("LOGGER", "Product List is Empty")
+            }
+        }
+
+    }
+
+    private fun launchSubPurchase(productDetails: ProductDetails) {
+        Log.d("LOGGER", "in launchSubPurchase method")
+        val productList = mutableListOf<BillingFlowParams.ProductDetailsParams>()
+        productList.add(
+            BillingFlowParams.ProductDetailsParams.newBuilder()
+                .setProductDetails(productDetails)
+                .build()
+        )
+
+        val billingFlowParams = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(productList)
+            .build()
+
+        mBillingClient.launchBillingFlow(requireActivity(), billingFlowParams)
     }
 
     override fun onAttach(context: Context) {

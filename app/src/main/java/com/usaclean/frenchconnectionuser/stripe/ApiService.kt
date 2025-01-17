@@ -43,7 +43,7 @@ interface ApiService {
 
     @POST("widgets/confirmPayment")
     @JvmSuppressWildcards
-    suspend fun confirmPayment(@Body requestBody: ConfirmPaymentRequest): Response<ConfirmPaymentResponse>
+    fun confirmPayment(@Body requestBody: ConfirmPaymentRequest): Call<ConfirmPaymentResponse>
 
     @PUT("widgets/updatestripeaccount")
     @JvmSuppressWildcards
