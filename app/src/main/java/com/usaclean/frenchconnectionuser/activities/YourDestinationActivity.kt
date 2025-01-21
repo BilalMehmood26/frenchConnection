@@ -268,6 +268,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
                 binding.progressBar.visibility = View.GONE
                 startActivity(Intent(this@YourDestinationActivity,DashboardActivity::class.java))
                 updateNotification("Tip Awarderd","You have just received a $$tipPrice tip.","$status")
+                setPayout(tipPrice,System.currentTimeMillis(),rideID)
             }.addOnFailureListener {
                 binding.progressBar.visibility = View.GONE
                 Toast.makeText(
@@ -358,6 +359,24 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun setPayout(price:Double,completionTimeStamp:Long,orderId:String){
+        val payout = hashMapOf(
+            "amount" to price,
+            "completionTimeStamp" to completionTimeStamp,
+            "driverId" to driverId,
+            "orderId" to orderId,
+            "status" to "unpaid",
+            "type" to "order"
+        )
+        db.collection("Payouts").document().set(payout).addOnCompleteListener {
+            if(it.isSuccessful){
+                binding.progressBar.visibility = View.GONE
+            }else{
+                binding.progressBar.visibility = View.GONE
+            }
+        }
+    }
+
     @SuppressLint("MissingInflatedId")
     private fun showCardDialog(carType: String) {
         val dialogView =
@@ -379,7 +398,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
 
         cardListRv.layoutManager = LinearLayoutManager(this@YourDestinationActivity)
         cardListRv.adapter = CardListAdapter(this@YourDestinationActivity, cardList) {
-            tipPrice+=1.0
+            //tipPrice+=1.0
             updateStatus(rideID!!, "rated",round(binding.ratingBar.rating).toInt(),tipPrice)
             dialog.dismiss()
         }

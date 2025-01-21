@@ -273,6 +273,7 @@ class YourRideActivity : AppCompatActivity(), OnMapReadyCallback {
                             intent.putExtra("status", ride.status)
                             intent.putExtra("driverName", driverName)
                             intent.putExtra("driverRating", driverRating)
+                            intent.putExtra("driverID", driverId)
                             intent.putExtra("rideID", rideID)
                             startActivity(intent)
                             overridePendingTransition(

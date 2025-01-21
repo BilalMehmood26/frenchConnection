@@ -49,4 +49,8 @@ interface ApiService {
     @JvmSuppressWildcards
     suspend fun connectAccount(@Body body: Map<String, Any>): Response<ResponseBody>
 
+    @POST("widgets/sendEmail")
+    @JvmSuppressWildcards
+    fun sendEmail(@Body body: Map<String, Any>): Call<ResponseBody>
+
 }

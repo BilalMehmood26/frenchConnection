@@ -71,6 +71,7 @@ import com.usaclean.frenchconnectionuser.model.CustomerResponse
 import com.usaclean.frenchconnectionuser.model.FirstStepResponse
 import com.usaclean.frenchconnectionuser.model.PaymentIntentResponse
 import com.usaclean.frenchconnectionuser.model.PaymentMethodsResponse
+import com.usaclean.frenchconnectionuser.model.Prices
 import com.usaclean.frenchconnectionuser.model.RideStatus
 import com.usaclean.frenchconnectionuser.stripe.Controller
 import com.usaclean.frenchconnectionuser.stripe.repo.PaymentViewModel
@@ -79,11 +80,13 @@ import com.usaclean.frenchconnectionuser.utils.UserSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import okhttp3.ResponseBody
 import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.time.LocalTime
 import java.util.UUID
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -92,7 +95,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 
-class HomeFragment : Fragment(){
+class HomeFragment : Fragment() {
 
 
     private val binding: FragmentHomeBinding by lazy {
@@ -129,6 +132,10 @@ class HomeFragment : Fragment(){
     private lateinit var fragmentContext: Context
     private var isBooked = false
     private lateinit var addressesDialogFragment: AddressesDialogFragment
+    private var startTime = 0
+    private var endTime = 0
+    private var oneWayFareList : ArrayList<Double> = arrayListOf()
+    private var returnFareList : ArrayList<Double> = arrayListOf()
 
     private var cardList: ArrayList<PaymentMethodsResponse.PaymentMethod> = ArrayList()
 
@@ -181,11 +188,11 @@ class HomeFragment : Fragment(){
             }
             stripe = Stripe(
                 fragmentContext,
-                "pk_live_51PgBExCo08Oa4W8HPCTXBEdse6nqn39Rdz4qMDcVGdJdVWMOV5zY5lxQjHJy2H7QJ8RlpgfsFzzWWduSJEiG3b8O00qcKyXeUe"
+                "pk_test_51PgBExCo08Oa4W8HRRlISwH7IOZRW42joDX0KpJRo7RK4tZhrz29Cout7tSsBEWCeODsr7IhT8jQGNiUrMIwwR0h00jZcUoUkr"
             )
             PaymentConfiguration.init(
                 fragmentContext,
-                "pk_live_51PgBExCo08Oa4W8HPCTXBEdse6nqn39Rdz4qMDcVGdJdVWMOV5zY5lxQjHJy2H7QJ8RlpgfsFzzWWduSJEiG3b8O00qcKyXeUe"
+                "pk_test_51PgBExCo08Oa4W8HRRlISwH7IOZRW42joDX0KpJRo7RK4tZhrz29Cout7tSsBEWCeODsr7IhT8jQGNiUrMIwwR0h00jZcUoUkr"
             )
             createFirstStep(UserSession.user.stripeCustid!!)
             if (UserSession.user.stripeCustid == "") {
@@ -217,7 +224,7 @@ class HomeFragment : Fragment(){
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && list != null) {
                     list.forEach { purchase ->
                         Log.d("LOGGER", "Verify successful")
-                        val transactionId = purchase.orderId?: UUID.randomUUID().toString()
+                        val transactionId = purchase.orderId ?: UUID.randomUUID().toString()
                         Log.d("LOGGER", "transiction ID : $transactionId")
                         lifecycleScope.launch(Dispatchers.IO) {
                             try {
@@ -239,7 +246,7 @@ class HomeFragment : Fragment(){
                             }
                         }
                     }
-                }else{
+                } else {
                     Log.d("LOGGER", "responseCode is null ")
                 }
             }.build()
@@ -251,15 +258,11 @@ class HomeFragment : Fragment(){
         mBillingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    // The BillingClient is ready. You can query purchases here.
-                    //Use any of function below to get details upon successful connection
                     Log.d("LOGGER", "Connection Established")
                 }
             }
 
             override fun onBillingServiceDisconnected() {
-                // Try to restart the connection on the next request to
-                // Google Play by calling the startConnection() method.
                 Log.d("LOGGER", "Connection NOT Established")
                 establishConnection()
             }
@@ -268,7 +271,7 @@ class HomeFragment : Fragment(){
 
     private fun consumePurchase(purchase: Purchase) {
         val consumeParams = ConsumeParams.newBuilder()
-            .setPurchaseToken(purchase.purchaseToken) // Set the purchase token (required)
+            .setPurchaseToken(purchase.purchaseToken)
             .build()
 
         lifecycleScope.launch {
@@ -536,26 +539,8 @@ class HomeFragment : Fragment(){
     @RequiresApi(Build.VERSION_CODES.S)
     private fun createRide() {
         val fareMap = mapOf(
-            "OneWay" to listOf(
-                1.00,
-                10.00,
-                18.00,
-                24.00,
-                28.00,
-                40.00,
-                50.00,
-                54.00
-            ).map { it.toInt() },
-            "Return" to listOf(
-                1.00,
-                25.00,
-                30.00,
-                40.00,
-                50.00,
-                60.00,
-                90.00,
-                100.00
-            ).map { it.toInt() }
+            "OneWay" to oneWayFareList.map { it.toInt() },
+            "Return" to returnFareList.map { it.toInt() }
         )
         totalFair = fareMap[returnWay]?.getOrNull(numberOfMembers) ?: 0
 
@@ -564,6 +549,8 @@ class HomeFragment : Fragment(){
 
     @RequiresApi(Build.VERSION_CODES.S)
     private fun setListener() {
+
+        getPrices()
 
         binding.runningRide.setOnClickListener {
             binding.runningRide.setBackgroundResource(R.drawable.gradient_button)
@@ -603,32 +590,61 @@ class HomeFragment : Fragment(){
             }
 
             bookRideBtn.setOnClickListener {
-                val destLatLng = isWithinFiveMiles(pickUpLat, pickUpLng, destLat, destLng)
-                when {
-                    pickUpAddress.isEmpty() -> Toast.makeText(
-                        fragmentContext,
-                        "Pickup Address is Empty",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                if (isCurrentTimeInRange(startTime, endTime)) {
+                    val destLatLng = isWithinFiveMiles(pickUpLat, pickUpLng, destLat, destLng)
+                    when {
+                        pickUpAddress.isEmpty() -> Toast.makeText(
+                            fragmentContext,
+                            "Pickup Address is Empty",
+                            Toast.LENGTH_SHORT
+                        ).show()
 
-                    destAddress.isEmpty() -> Toast.makeText(
-                        fragmentContext,
-                        "Drop Off Address is Empty",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                        destAddress.isEmpty() -> Toast.makeText(
+                            fragmentContext,
+                            "Drop Off Address is Empty",
+                            Toast.LENGTH_SHORT
+                        ).show()
 
-                    destLatLng.not() -> Toast.makeText(
-                        fragmentContext,
-                        "Sorry FC does not travel out of a 5 mile radius",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                        destLatLng.not() -> Toast.makeText(
+                            fragmentContext,
+                            "Sorry FC does not travel out of a 5 mile radius",
+                            Toast.LENGTH_SHORT
+                        ).show()
 
-                    else -> createRide()
+                        else -> createRide()
+                    }
+                } else {
+                    alertDialog("Sorry we are currently not rolling!")
                 }
             }
         }
     }
 
+    private fun alertDialog(message: String) {
+        val builder = AlertDialog.Builder(fragmentContext)
+
+        builder.apply {
+            setTitle("Alert!")
+            setMessage(message)
+            setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+            }
+        }
+        val dialog = builder.create()
+        dialog.show()
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun isCurrentTimeInRange(startTime: Int, endTime: Int): Boolean {
+        val currentHour = LocalTime.now().hour
+        Log.d("LOGGER", "isCurrentTimeInRange: $currentHour")
+        return if (endTime > startTime) {
+            currentHour in startTime until endTime
+        } else {
+            currentHour >= startTime || currentHour < endTime
+        }
+    }
 
     private fun getBooking() {
         binding.progressBar.visibility = View.VISIBLE
@@ -875,25 +891,43 @@ class HomeFragment : Fragment(){
                 db.collection("Bookings").document(id).set(booking).addOnCompleteListener { task ->
                     lifecycleScope.launch(Dispatchers.Main) {
                         if (task.isSuccessful) {
-                            Toast.makeText(fragmentContext, "Order Created", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(fragmentContext, "Order Created", Toast.LENGTH_SHORT)
+                                .show()
                             isBooked = true
                             Log.d("LOGGER", "Booking success")
                             updateNotification(
                                 "New Ride Booked",
                                 "Your booking was received, we will connect you to a driver soon.",
                                 "booked",
-                                id,
-                                lat,
-                                lng,
-                                pickUpModel.address!!,
-                                destAddress,
-                                carType
+                                id
                             )
+
+                            val body = mapOf("bookingid" to id)
+                            Controller.instance.sendEmail(body)
+                                .enqueue(object : Callback<ResponseBody> {
+                                    override fun onResponse(
+                                        call: Call<ResponseBody>,
+                                        response: Response<ResponseBody>
+                                    ) {
+                                        Log.d(
+                                            "LOGGER",
+                                            "onResponseSuccess: ${response.body()!!.string()}"
+                                        )
+                                    }
+
+                                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                        Log.d("LOGGER", "onResponseError: ${t.message}")
+                                    }
+                                })
                             binding.progressBar.visibility = View.GONE
                         } else {
                             Log.d("LOGGER", "Booking failed")
                             binding.progressBar.visibility = View.GONE
-                            Toast.makeText(fragmentContext, task.exception!!.message.toString(), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                fragmentContext,
+                                task.exception!!.message.toString(),
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
                 }
@@ -908,12 +942,7 @@ class HomeFragment : Fragment(){
         title: String,
         msg: String,
         status: String,
-        orderID: String,
-        pickUpLat: Double,
-        pickUpLng: Double,
-        pickUpAddress: String,
-        dropOffAddress: String,
-        carType: String
+        orderID: String
     ) {
         Log.d("LOGGER", "in Notification Method")
         binding.progressBar.visibility = View.VISIBLE
@@ -932,20 +961,32 @@ class HomeFragment : Fragment(){
         db.collection("Notification").document().set(notification).addOnSuccessListener {
             binding.progressBar.visibility = View.GONE
             Log.d("LOGGER", "in Notificiation success")
-            /*val intent = Intent(requireActivity(), YourRideActivity::class.java)
-            intent.putExtra("pickUpLat", pickUpLat)
-            intent.putExtra("pickUpLng", pickUpLng)
-            intent.putExtra("pickUpAddress", pickUpAddress)
-            intent.putExtra("dropOffAddress", dropOffAddress)
-            intent.putExtra("driverID", "")
-            intent.putExtra("carType", carType)
-            intent.putExtra("rideID", orderID)
-            startActivity(intent)*/
-
         }.addOnFailureListener {
             Log.d("LOGGER", "in Notificaiton Fail")
             binding.progressBar.visibility = View.GONE
             Toast.makeText(fragmentContext, it.message.toString(), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun getPrices() {
+        binding.progressBar.visibility = View.VISIBLE
+        db.collection("Settings").document("Prices").addSnapshotListener { value, error ->
+            if (error != null) {
+                binding.progressBar.visibility = View.GONE
+                Toast.makeText(fragmentContext, error.message.toString(), Toast.LENGTH_SHORT).show()
+                return@addSnapshotListener
+            }
+
+            if (value != null) {
+                binding.progressBar.visibility = View.GONE
+                val prices = value.toObject(Prices::class.java)
+                startTime = prices!!.startHour
+                endTime = prices.endHour
+                oneWayFareList.addAll(prices.single.values.map { it.toDouble()})
+                returnFareList.addAll(prices.double.values.map { it.toDouble()})
+
+                Log.d("LOGGER", "getPrices: $startTime $endTime")
+            }
         }
     }
 
@@ -996,8 +1037,11 @@ class HomeFragment : Fragment(){
             Log.d("LOGGER", "list: ${list}")
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && list.isNotEmpty()) {
                 launchSubPurchase(list[0])
-                Log.d("LOGGER", "Product Price: ${list[0].oneTimePurchaseOfferDetails?.formattedPrice}")
-            }else{
+                Log.d(
+                    "LOGGER",
+                    "Product Price: ${list[0].oneTimePurchaseOfferDetails?.formattedPrice}"
+                )
+            } else {
                 Log.d("LOGGER", "Product List is Empty")
             }
         }

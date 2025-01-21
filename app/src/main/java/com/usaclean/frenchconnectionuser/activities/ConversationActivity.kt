@@ -140,6 +140,29 @@ class ConversationActivity : AppCompatActivity() {
             .update(lastMessageMap as Map<String, Any>)
         FirebaseFirestore.getInstance().collection("Chat").document(messageId)
             .collection("Conversation").document(id).set(messageMap)
+
+        val isRead = hashMapOf(
+            Firebase.auth.currentUser!!.uid to false,
+            toID to false,
+        )
+
+        val notification = hashMapOf(
+            "message" to message,
+            "orderId" to messageId,
+            "isRead" to isRead,
+            "timestamp" to System.currentTimeMillis(),
+            "title" to "New Message",
+            "type" to "chat",
+            "userId" to Firebase.auth.currentUser!!.uid,
+        )
+        db.collection("Notification").document().set(notification).addOnSuccessListener {
+            binding.progressBar.visibility = View.GONE
+            Log.d("LOGGER", "in Notificiation success")
+        }.addOnFailureListener {
+            Log.d("LOGGER", "in Notificaiton Fail")
+            binding.progressBar.visibility = View.GONE
+            Toast.makeText(this@ConversationActivity, it.message.toString(), Toast.LENGTH_SHORT).show()
+        }
         binding.messageTv.setText("")
 
     }
