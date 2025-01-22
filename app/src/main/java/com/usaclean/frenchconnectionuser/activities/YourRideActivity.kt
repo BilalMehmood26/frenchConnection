@@ -268,7 +268,7 @@ class YourRideActivity : AppCompatActivity(), OnMapReadyCallback {
                         "rideCompleted" -> {
                             val intent =
                                 Intent(this@YourRideActivity, YourDestinationActivity::class.java)
-                            intent.putExtra("price", price)
+                            intent.putExtra("price", ride.price)
                             intent.putExtra("bookingDate", formatDateTime(ride.bookingDate!!))
                             intent.putExtra("status", ride.status)
                             intent.putExtra("driverName", driverName)

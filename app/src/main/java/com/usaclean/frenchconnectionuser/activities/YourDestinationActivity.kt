@@ -59,7 +59,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
     private var status = ""
     private var driverId: String? = ""
     private var bookingDate = ""
-    private var price = 0.0
+    private var price = ""
     private var tipPrice = 0.0
     private var carType: String = ""
     private var secrat = ""
@@ -74,7 +74,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        price = intent.getDoubleExtra("price", 0.0)
+        price = intent.getStringExtra("price")!!
         bookingDate = intent.getStringExtra("bookingDate")!!
         status = intent.getStringExtra("status")!!
         driverName = intent.getStringExtra("driverName")!!
@@ -90,7 +90,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
             GooglePaymentsUtil.createPaymentsClient(this@YourDestinationActivity)
             stripe = Stripe(
                 this@YourDestinationActivity,
-                "pk_test_51PgBExCo08Oa4W8HRRlISwH7IOZRW42joDX0KpJRo7RK4tZhrz29Cout7tSsBEWCeODsr7IhT8jQGNiUrMIwwR0h00jZcUoUkr"
+                "pk_live_51PgBExCo08Oa4W8HRRlISwH7IOZRW42joDX0KpJRo7RK4tZhrz29Cout7tSsBEWCeODsr7IhT8jQGNiUrMIwwR0h00jZcUoUkr"
             )
 
             markCompleteBtn.setOnClickListener {
@@ -296,7 +296,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
             if (ride != null) {
                 binding.apply {
                     timeDateTv.text = bookingDate
-                    priceTv.text = price.toString()
+                    priceTv.text = "$ $price"
                     nameTv.text = driverName
                     ratingTv.text = driverRating
                     driverId = ride.driverId
