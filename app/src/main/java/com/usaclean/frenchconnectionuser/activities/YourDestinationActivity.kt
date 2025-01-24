@@ -83,7 +83,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
 
         binding.apply {
             backBtn.setOnClickListener {
-                finish()
+                onBackPressed()
             }
 
             getOrders()
@@ -108,8 +108,13 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
             when (taskResult.status.statusCode) {
                 CommonStatusCodes.SUCCESS -> {
                     taskResult.result?.let { token ->
-                        tipPrice+=1.0
-                        updateStatus(rideID!!, "rated",round(binding.ratingBar.rating).toInt(),tipPrice)
+                        tipPrice += 1.0
+                        updateStatus(
+                            rideID!!,
+                            "rated",
+                            round(binding.ratingBar.rating).toInt(),
+                            tipPrice
+                        )
                     }
                 }
 
@@ -191,13 +196,17 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 override fun onFailure(call: Call<PaymentIntentResponse>, t: Throwable) {
                     binding.progressBar.visibility = View.GONE
-                    Toast.makeText(this@YourDestinationActivity, t.message.toString(), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@YourDestinationActivity,
+                        t.message.toString(),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             })
     }
 
     private fun setListener() {
-
+        rateDialog()
 
         binding.fiveTip.setOnClickListener {
             binding.fiveTip.setBackgroundResource(R.drawable.tip_button_selected)
@@ -266,9 +275,13 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
         db.collection("Bookings").document(rideID).update(updateStatus as Map<String, Any>)
             .addOnSuccessListener {
                 binding.progressBar.visibility = View.GONE
-                startActivity(Intent(this@YourDestinationActivity,DashboardActivity::class.java))
-                updateNotification("Tip Awarderd","You have just received a $$tipPrice tip.","$status")
-                setPayout(tipPrice,System.currentTimeMillis(),rideID)
+                startActivity(Intent(this@YourDestinationActivity, DashboardActivity::class.java))
+                updateNotification(
+                    "Tip Awarderd",
+                    "You have just received a $$tipPrice tip.",
+                    "$status"
+                )
+                setPayout(tipPrice, System.currentTimeMillis(), rideID)
             }.addOnFailureListener {
                 binding.progressBar.visibility = View.GONE
                 Toast.makeText(
@@ -352,6 +365,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
         )
         db.collection("Notification").document().set(notification).addOnSuccessListener {
             binding.progressBar.visibility = View.GONE
+            startActivity(Intent(this@YourDestinationActivity,DashboardActivity::class.java))
             finish()
         }.addOnFailureListener {
             binding.progressBar.visibility = View.GONE
@@ -359,7 +373,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun setPayout(price:Double,completionTimeStamp:Long,orderId:String){
+    private fun setPayout(price: Double, completionTimeStamp: Long, orderId: String) {
         val payout = hashMapOf(
             "amount" to price,
             "completionTimeStamp" to completionTimeStamp,
@@ -369,12 +383,23 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
             "type" to "order"
         )
         db.collection("Payouts").document().set(payout).addOnCompleteListener {
-            if(it.isSuccessful){
+            if (it.isSuccessful) {
                 binding.progressBar.visibility = View.GONE
-            }else{
+            } else {
                 binding.progressBar.visibility = View.GONE
             }
         }
+    }
+
+    private fun rateDialog() {
+        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        builder.setTitle("Ride Completed")
+        builder.setMessage("Please rate your ride!")
+
+        builder.setPositiveButton("OK") { dialog, which ->
+            dialog.dismiss()
+        }
+        builder.show()
     }
 
     @SuppressLint("MissingInflatedId")
@@ -388,7 +413,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
         dialog.show()
 
         val fair = dialogView.findViewById<TextView>(R.id.fair_tv)
-        fair.setText("$ $tipPrice"+"0"+"+ $1.00 Processing Charges" )
+        fair.setText("$ $tipPrice" + "0" + "+ $1.00 Processing Charges")
         dialogView.findViewById<TextView>(R.id.add_card_btn).setOnClickListener {
             addCardDialog(carType)
             dialog.dismiss()
@@ -399,14 +424,15 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
         cardListRv.layoutManager = LinearLayoutManager(this@YourDestinationActivity)
         cardListRv.adapter = CardListAdapter(this@YourDestinationActivity, cardList) {
             //tipPrice+=1.0
-            updateStatus(rideID!!, "rated",round(binding.ratingBar.rating).toInt(),tipPrice)
+            updateStatus(rideID!!, "rated", round(binding.ratingBar.rating).toInt(), tipPrice)
             dialog.dismiss()
         }
     }
 
     private fun addCardDialog(carType: String) {
         val dialogView =
-            LayoutInflater.from(this@YourDestinationActivity).inflate(R.layout.dialog_add_card, null)
+            LayoutInflater.from(this@YourDestinationActivity)
+                .inflate(R.layout.dialog_add_card, null)
         val dialogBuilder = AlertDialog.Builder(this@YourDestinationActivity)
             .setView(dialogView)
         val dialog = dialogBuilder.create()
@@ -460,7 +486,11 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
 
             override fun onFailure(call: Call<FirstStepResponse>, t: Throwable) {
                 binding.progressBar.visibility = View.GONE
-                Toast.makeText(this@YourDestinationActivity, t.message.toString(), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@YourDestinationActivity,
+                    t.message.toString(),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         })
 
@@ -493,7 +523,11 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
 
             override fun onFailure(call: Call<PaymentMethodsResponse>, t: Throwable) {
                 binding.progressBar.visibility = View.GONE
-                Toast.makeText(this@YourDestinationActivity, t.message.toString(), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@YourDestinationActivity,
+                    t.message.toString(),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         })
 
@@ -517,7 +551,7 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
         if (tipText.isNotEmpty()) {
             tipPrice = tipText.toDouble()
         }
-        fair.setText("$ $tipPrice"+"0")
+        fair.setText("$ $tipPrice" + "0")
 
         dialogView.findViewById<TextView>(R.id.your_proceed_btn).setOnClickListener {
             if (cardTypeRadio.isChecked) {
@@ -546,5 +580,14 @@ class YourDestinationActivity : AppCompatActivity(), OnMapReadyCallback {
             myGoogleMap?.addMarker(MarkerOptions().position(latLng).title("Selected Location"))
         }
         myGoogleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))*/
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        startActivity(Intent(this@YourDestinationActivity,DashboardActivity::class.java))
+        overridePendingTransition(
+            androidx.appcompat.R.anim.abc_fade_in,
+            androidx.appcompat.R.anim.abc_fade_out
+        )
     }
 }

@@ -21,9 +21,9 @@ interface ApiService {
     @JvmSuppressWildcards
     fun getFirstStep(@Body body: Map<String, Any>): Call<FirstStepResponse>
 
-    @POST("/widgets/checkcustidexistornot")
-    @JvmSuppressWildcards
-    fun createCustomer(@Body body: Map<String, Any>): Call<CustomerResponse>
+        @POST("/widgets/checkcustidexistornot")
+        @JvmSuppressWildcards
+        fun createCustomer(@Body body: Map<String, Any>): Call<CustomerResponse>
 
     @POST("/widgets/paymentMethods")
     @JvmSuppressWildcards

@@ -13,8 +13,8 @@ android {
         applicationId = "com.usaclean.frenchconnectionuser"
         minSdk = 24
         targetSdk = 34
-        versionCode = 16
-        versionName = "2.6"
+        versionCode = 17
+        versionName = "2.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

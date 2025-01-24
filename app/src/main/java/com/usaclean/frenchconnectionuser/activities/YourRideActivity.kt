@@ -35,6 +35,7 @@ import com.usaclean.frenchconnectionuser.databinding.ActivityDashboardBinding
 import com.usaclean.frenchconnectionuser.databinding.ActivityYourRideBinding
 import com.usaclean.frenchconnectionuser.model.Booking
 import com.usaclean.frenchconnectionuser.model.MapsResults
+import com.usaclean.frenchconnectionuser.model.RideStatus
 import com.usaclean.frenchconnectionuser.model.User
 import com.usaclean.frenchconnectionuser.utils.RetrofitClient
 import com.usaclean.frenchconnectionuser.utils.UserSession
@@ -266,21 +267,13 @@ class YourRideActivity : AppCompatActivity(), OnMapReadyCallback {
                         }
 
                         "rideCompleted" -> {
-                            val intent =
-                                Intent(this@YourRideActivity, YourDestinationActivity::class.java)
-                            intent.putExtra("price", ride.price)
-                            intent.putExtra("bookingDate", formatDateTime(ride.bookingDate!!))
-                            intent.putExtra("status", ride.status)
-                            intent.putExtra("driverName", driverName)
-                            intent.putExtra("driverRating", driverRating)
-                            intent.putExtra("driverID", driverId)
-                            intent.putExtra("rideID", rideID)
-                            startActivity(intent)
-                            overridePendingTransition(
-                                androidx.appcompat.R.anim.abc_fade_in,
-                                androidx.appcompat.R.anim.abc_fade_out
+                            setPayout(
+                                ride.price!!.toDouble(),
+                                System.currentTimeMillis(),
+                                ride.id!!,
+                                ride.bookingDate!!,
+                                ride.status
                             )
-
                         }
                     }
 
@@ -301,13 +294,50 @@ class YourRideActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun setPayout(
+        price: Double,
+        completionTimeStamp: Long,
+        orderId: String,
+        bookingDate: Long,
+        status: String
+    ) {
+        val payout = hashMapOf(
+            "amount" to price,
+            "completionTimeStamp" to completionTimeStamp,
+            "driverId" to driverId,
+            "orderId" to orderId,
+            "status" to "unpaid",
+            "type" to "order"
+        )
+        db.collection("Payouts").document().set(payout).addOnCompleteListener {
+            if (it.isSuccessful) {
+                binding.progressBar.visibility = View.GONE
+                val intent = Intent(this@YourRideActivity, YourDestinationActivity::class.java)
+                intent.putExtra("price", price.toString())
+                intent.putExtra("bookingDate", formatDateTime(bookingDate))
+                intent.putExtra("status", status)
+                intent.putExtra("driverName", driverName)
+                intent.putExtra("driverRating", driverRating)
+                intent.putExtra("driverID", driverId)
+                intent.putExtra("rideID", rideID)
+                startActivity(intent)
+                overridePendingTransition(
+                    androidx.appcompat.R.anim.abc_fade_in,
+                    androidx.appcompat.R.anim.abc_fade_out
+                )
+            } else {
+                binding.progressBar.visibility = View.GONE
+            }
+        }
+    }
+
     private fun getDriverInfo(userID: String) {
         db.collection("Users").document(userID).get().addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 binding.progressBar.visibility = View.GONE
                 val user = task.result.toObject(User::class.java)
                 binding.nameTv.text = user!!.userName
-                if (user.image!!.isNotEmpty()&& !isDestroyed) {
+                if (user.image!!.isNotEmpty() && !isDestroyed) {
                     Glide.with(this).load(user.image).into(binding.profileIV)
                 } else {
                     binding.profileIV.setImageResource(R.drawable.main_logo)
@@ -363,7 +393,11 @@ class YourRideActivity : AppCompatActivity(), OnMapReadyCallback {
             )
             db.collection("Payouts").document().set(payout).addOnSuccessListener {
                 Toast.makeText(this, "Ride Completed", Toast.LENGTH_SHORT).show()
-                updateNotification("Ride Complete","Thank you for booking with French connection!","rideCompleted")
+                updateNotification(
+                    "Ride Complete",
+                    "Thank you for booking with French connection!",
+                    "rideCompleted"
+                )
                 binding.progressBar.visibility = View.GONE
             }.addOnFailureListener {
                 binding.progressBar.visibility = View.GONE
