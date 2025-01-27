@@ -39,6 +39,12 @@ class AddressesDialogFragment(val addressClick: (String, String, String, LatLng)
     val REQUEST_CODE = 1000
     private var userLat = 0.0
     private var userLng = 0.0
+
+    private var address = ""
+    private var fullAddress = ""
+    private var city = ""
+    private var postalCode = ""
+
     private lateinit var confirmBtn :TextView
 
     override fun onCreateView(
@@ -93,23 +99,18 @@ class AddressesDialogFragment(val addressClick: (String, String, String, LatLng)
 
                 override fun onPlaceSelected(p0: Place) {
 
-                    // Extracting additional address components
                     val addressComponents = p0.addressComponents?.asList() ?: emptyList()
-                    var streetAddress = ""
-                    var city = ""
-                    var postalCode = ""
-
                     for (component in addressComponents) {
                         when {
                             component.types.contains("street_number") -> {
-                                streetAddress = component.name
+                                fullAddress = component.name
                             }
 
                             component.types.contains("route") -> {
-                                streetAddress = if (streetAddress.isEmpty()) {
+                                fullAddress = if (fullAddress.isEmpty()) {
                                     component.name
                                 } else {
-                                    "$streetAddress ${component.name}"
+                                    "$fullAddress ${component.name}"
                                 }
                             }
 
@@ -122,7 +123,17 @@ class AddressesDialogFragment(val addressClick: (String, String, String, LatLng)
                             }
                         }
                     }
+                    myGoogleMap?.clear()
                     myGoogleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(p0.latLng, 14f))
+                    myGoogleMap?.addMarker(MarkerOptions().position(p0.latLng).title(fullAddress))
+                    if(city.equals("New Orleans")){
+                        confirmBtn.setOnClickListener {
+                            addressClick.invoke(fullAddress, city, postalCode,p0.latLng)
+                            dismiss()
+                        }
+                    }else{
+                        Toast.makeText(requireContext(), "State not matched", Toast.LENGTH_SHORT).show()
+                    }
                 }
             })
         }
@@ -166,9 +177,9 @@ class AddressesDialogFragment(val addressClick: (String, String, String, LatLng)
                 val addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
                 if (addresses != null && addresses.isNotEmpty()) {
                     val address = addresses[0]
-                    val fullAddress = address.getAddressLine(0) // Full address
-                    val city = address.locality
-                    val postalCode = address.postalCode // Postal code
+                    fullAddress = address.getAddressLine(0) // Full address
+                    city = address.locality
+                    postalCode = address.postalCode // Postal code
                     val latitude = address.latitude
                     val longitude = address.longitude
                     if(city.equals("New Orleans")){

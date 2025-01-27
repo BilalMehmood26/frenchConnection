@@ -39,6 +39,7 @@
             android:backgroundTint="@color/gradient_1"
             android:text="Done"
             android:paddingTop="@dimen/_10sdp"
+            android:textColor="@color/black"
             android:paddingBottom="@dimen/_10sdp"
             android:textSize="@dimen/_14sdp"
             android:paddingStart="@dimen/_10sdp"
