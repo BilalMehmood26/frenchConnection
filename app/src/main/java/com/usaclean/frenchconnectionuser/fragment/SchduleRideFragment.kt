@@ -68,6 +68,8 @@ class SchduleRideFragment : Fragment() {
     private val binding: FragmentSchduleRideBinding by lazy {
         FragmentSchduleRideBinding.inflate(layoutInflater)
     }
+    private lateinit var fragmentContext: Context
+    private lateinit var selectedDate: LocalDate
 
     private var destAddress: String = ""
     private var destLat: Double = 0.0
@@ -80,22 +82,11 @@ class SchduleRideFragment : Fragment() {
     private var carType: String = ""
     private var cardType: String = ""
     private var time: Long = 0
-    private val db = Firebase.firestore
-
-    private var cardList: ArrayList<PaymentMethodsResponse.PaymentMethod> = ArrayList()
 
     private var secrat = ""
     private var paymentMethod = ""
     lateinit var stripe: Stripe
 
-    private lateinit var selectedDate: LocalDate
-
-    private val memberList = arrayListOf("1", "2", "3", "4", "5", "6", "7")
-    private var numberOfMembers = 1
-    private var totalFair = 10
-    private var returnWay = "OneWay"
-
-    private lateinit var fragmentContext: Context
     private lateinit var addressesDialogFragment: AddressesDialogFragment
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -238,8 +229,7 @@ class SchduleRideFragment : Fragment() {
             monthYearTV.text = monthYearFromDate(selectedDate)
             val daysInMonth = daysInMonthArray(selectedDate)
 
-            val calendarAdapter =
-                CalendarAdapter(daysInMonth, selectedDate) { dateinText, dateStamp ->
+            val calendarAdapter = CalendarAdapter(daysInMonth, selectedDate) { dateinText, dateStamp ->
                     schduleDateInMillis = dateStamp
                     Log.d("Logger", "setMonthView: $dateinText")
                 }

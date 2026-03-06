@@ -85,7 +85,7 @@ class ConversationActivity : AppCompatActivity() {
     }
 
     private fun addRealtimeListener() {
-        if (!messageId.isNullOrEmpty()) {
+        if (messageId.isNotEmpty()) {
             FirebaseFirestore.getInstance().collection("Chat")
                 .document(messageId).collection("Conversation")
                 .orderBy("timestamp", Query.Direction.DESCENDING)

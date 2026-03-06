@@ -53,7 +53,6 @@ class YourRideActivity : AppCompatActivity(), OnMapReadyCallback {
         ActivityYourRideBinding.inflate(layoutInflater)
     }
 
-
     private var rideID: String? = ""
     private var riderUID: String? = ""
     private val db = Firebase.firestore

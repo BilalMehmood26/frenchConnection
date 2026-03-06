@@ -1064,8 +1064,8 @@ class HomeFragment : Fragment() {
         mBillingClient.launchBillingFlow(requireActivity(), billingFlowParams)
     }
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        fragmentContext = context
-    }
+        override fun onAttach(context: Context) {
+            super.onAttach(context)
+            fragmentContext = context
+        }
 }

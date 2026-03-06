@@ -14,5 +14,4 @@ object Controller {
 
         retrofit.create(ApiService::class.java)
     }
-
 }

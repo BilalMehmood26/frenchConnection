@@ -61,8 +61,6 @@ class ChatFragment : Fragment() {
             binding.progressBar.visibility = View.GONE
             setChatAdapter()
         }
-
-
     }
 
     private fun setChatAdapter() {
@@ -72,8 +70,8 @@ class ChatFragment : Fragment() {
     }
 
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        fragmentContext = context
-    }
+        override fun onAttach(context: Context) {
+            super.onAttach(context)
+            fragmentContext = context
+        }
 }

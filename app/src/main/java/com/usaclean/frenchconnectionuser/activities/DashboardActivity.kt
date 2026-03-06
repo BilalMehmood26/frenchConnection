@@ -90,6 +90,7 @@ class DashboardActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun logout(){
         val userUpdate = hashMapOf(
             "isOnline" to false
@@ -112,6 +113,7 @@ class DashboardActivity : AppCompatActivity() {
                 ).show()
             }
     }
+
     private fun setListener() {
 
         binding.homeTab.setOnClickListener {

@@ -195,6 +195,6 @@ class AddressesDialogFragment(val addressClick: (String, String, String, LatLng)
                 e.printStackTrace()
             }
         }
-        myGoogleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
+        myGoogleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 20f))
     }
 }

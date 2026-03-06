@@ -451,6 +451,12 @@
                 app:spinner_popup_elevation="@dimen/_10sdp"
                 tools:ignore="HardcodedText,UnusedAttribute" />
 
+            <TextView
+                android:id="@+id/textView7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="prevIV" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.core.widget.NestedScrollView>
@@ -472,6 +478,7 @@
            <TextView
                android:id="@+id/textView201"
                android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
                android:layout_height="wrap_content"
                android:fontFamily="@font/montserrat_medium"
                android:text="Time"
